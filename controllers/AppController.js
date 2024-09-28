@@ -8,10 +8,17 @@ const AppController = {
     res.status(200).json({ redis: redisStatus, db: dbStatus });
   },
 
-  getStats(req, res) {
-    const users = dbClient.nbUsers();
-    const files = dbClient.nbFiles();
-    res.status(200).json({ users, files });
+  async getStats(req, res) {
+    try {
+      const users = await dbClient.nbUsers();
+      const files = await dbClient.nbFiles();
+      res.status(200).json({ users, files });
+    } catch (error) {
+      res.status(500).json({ error });
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+
+    return null;
   },
 };
 
