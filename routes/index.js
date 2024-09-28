@@ -1,8 +1,7 @@
-import express from "express";
-import AppController from "../controllers/AppController.js";
-import AuthController from "../controllers/AuthController.js";
-import UsersController from "../controllers/UsersController.js";
-
+import express from 'express';
+import AppController from '../controllers/AppController';
+import AuthController from '../controllers/AuthController';
+import UsersController from '../controllers/UsersController';
 
 const router = express.Router();
 // GET /status => AppController.getStatus
