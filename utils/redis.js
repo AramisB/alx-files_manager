@@ -1,49 +1,40 @@
-import redis from "redis"
+import { createClient } from "redis";
 
-class redisClient {
-
+class RedisClient {
     constructor() {
-        this.client = redis.createClient({
-            url: 'redis.//27.0.0.1:6379',
+        this.client = createClient({
+            url: 'redis://127.0.0.1:6379',
         });
 
         this.client.on('error', (err) => {
-            console.log(err);
+            console.log('Redis Client Error', err);
         });
 
-        this.client.connect().catch((err) => {
-            console.log(err);
-        });
+        this.connect();
     }
+
+    async connect() {
+        await this.client.connect();
+    }
+
     isAlive() {
-        return this.client.isOpen();        
+        return this.client.isOpen;
     }
-    
+
     async get(key) {
-        return new Promise((resolve, reject) => {
-            this.client.get(key, (err, data) => {
-                if (err) reject(err);
-                resolve(data);
-            });
-        });
+        return await this.client.get(key);
     }
+
     async set(key, value, duration) {
-        return new Promise((resolve, reject) => {
-            this.client.set(key, value, 'EX', duration, (err, data) => {
-                if (err) reject(err);
-                resolve(data);
-            });
+        await this.client.set(key, value, {
+            EX: duration,
         });
     }
+
     async del(key) {
-        return new Promise((resolve, reject) => {
-            this.client.del(key, (err, data) => {
-                if (err) reject(err);
-                resolve(data);
-            });
-        });
+        await this.client.del(key);
     }
 }
 
-const redisClient = new redisClient();
+const redisClient = new RedisClient();
 export default redisClient;
