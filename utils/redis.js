@@ -6,24 +6,23 @@ class RedisClient {
     this.client = createClient({
       url: 'redis://127.0.0.1:6379',
     });
-
-    this.getAsync = promisify(this.client.get).bind(this.client);
-    this.setAsync = promisify(this.client.set).bind(this.client);
-    this.delAsync = promisify(this.client.del).bind(this.client);
-
+    this.isClientConnected = true;
     this.client.on('error', (err) => {
-      console.log('Redis Client Error', err);
+      console.error('Redis client failed to connect:', err.message || err.toString());
+      this.isClientConnected = false;
+    });
+    this.client.on('connect', () => {
+      console.log('Redis client connected');
+      this.isClientConnected = true;
     });
 
-    this.connect();
-  }
-
-  async connect() {
-    await this.client.connect();
+    this.getAsync = promisify(this.client.GET).bind(this.client);
+    this.setAsync = promisify(this.client.SETEX).bind(this.client);
+    this.delAsync = promisify(this.client.DEL).bind(this.client);
   }
 
   isAlive() {
-    return this.client.isOpen;
+    return this.isClientConnected;
   }
 
   async get(key) {
@@ -37,7 +36,7 @@ class RedisClient {
   }
 
   async del(key) {
-    await this.delAsync(key);
+    await this.de(key);
   }
 }
 
