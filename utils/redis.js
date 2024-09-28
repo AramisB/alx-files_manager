@@ -1,39 +1,39 @@
-import { createClient } from "redis";
+import { createClient } from 'redis';
 
 class RedisClient {
-    constructor() {
-        this.client = createClient({
-            url: 'redis://127.0.0.1:6379',
-        });
+  constructor() {
+    this.client = createClient({
+      url: 'redis://127.0.0.1:6379',
+    });
 
-        this.client.on('error', (err) => {
-            console.log('Redis Client Error', err);
-        });
+    this.client.on('error', (err) => {
+      console.log('Redis Client Error', err);
+    });
 
-        this.connect();
-    }
+    this.connect();
+  }
 
-    async connect() {
-        await this.client.connect();
-    }
+  async connect() {
+    await this.client.connect();
+  }
 
-    isAlive() {
-        return this.client.isOpen;
-    }
+  isAlive() {
+    return this.client.isOpen;
+  }
 
-    async get(key) {
-        return await this.client.get(key);
-    }
+  async get(key) {
+    return this.client.get(key);
+  }
 
-    async set(key, value, duration) {
-        await this.client.set(key, value, {
-            EX: duration,
-        });
-    }
+  async set(key, value, duration) {
+    await this.client.set(key, value, {
+      EX: duration,
+    });
+  }
 
-    async del(key) {
-        await this.client.del(key);
-    }
+  async del(key) {
+    await this.client.del(key);
+  }
 }
 
 const redisClient = new RedisClient();
