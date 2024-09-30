@@ -2,6 +2,7 @@ import express from 'express';
 import AppController from '../controllers/AppController';
 import AuthController from '../controllers/AuthController';
 import UsersController from '../controllers/UsersController';
+import FilesController from '../controllers/FilesController';
 
 const router = express.Router();
 // GET /status => AppController.getStatus
@@ -17,5 +18,11 @@ router.get('/connect', AuthController.getConnect);
 router.get('/disconnect', AuthController.getDisconnect);
 // GET /users/me => UserController.getMe
 router.get('/users/me', UsersController.getMe);
+// POST /files => FilesController.postUpload
+router.post('/files', FilesController.postUpload);
+// GET /files/:id => FilesController.getShow
+router.get('/files/:id', FilesController.getShow);
+// GET /files => FilesController.getIndex
+router.get('/files', FilesController.getIndex);
 
 export default router;

@@ -52,6 +52,24 @@ class DBClient {
   getCollection(collectionName) {
     return this.client.db(this.databaseName).collection(collectionName);
   }
+
+  async getUserFromToken(token) {
+    if (!this.isConnected) {
+      throw new Error('Database not connected');
+    }
+    const db = this.client.db(this.databaseName);
+    const user = await db.collection('users').findOne({ token });
+    return user;
+  }
+
+  async insertFile(fileData) {
+    if (!this.isConnected) {
+      throw new Error('Database not connected');
+    }
+    const db = this.client.db(this.databaseName);
+    const result = await db.collection('files').insertOne(fileData);
+    return result;
+  }
 }
 
 const dbClient = new DBClient();
