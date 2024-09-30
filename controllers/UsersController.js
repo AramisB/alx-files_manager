@@ -1,40 +1,80 @@
-import sha1 from 'sha1';
-import Queue from 'bull/lib/queue';
+import { ObjectId } from 'mongodb';
+import crypto from 'crypto';
 import dbClient from '../utils/db';
 
-const usersQueue = new Queue('users');
+const UsersController = {
+  // Endpoint to create a new user
+  async postNew(req, res) {
+    const { email, password } = req.body;
 
-export default class UsersController {
-  static async postNew(req, res) {
-    const email = req.body ? req.body.email : null;
-    const password = req.body ? req.body.password : null;
-
+    // Validate email and password
     if (!email) {
-      res.status(400).json({ Error: 'Missing email' });
-      return;
+      return res.status(400).json({ error: 'Missing email' });
     }
     if (!password) {
-      res.status(400).json({ Error: 'Missing password' });
-      return;
+      return res.status(400).json({ error: 'Missing password' });
     }
-    const user = await dbClient.getCollection('users').findOne({ email });
-    if (user) {
-      res.status(400).json({ Error: 'User already exists' });
-      return;
+
+    // Check if the email already exists
+    const existingUser = await dbClient.getCollection('users').findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Already exists' });
     }
-    const insertInfo = await dbClient.getCollection('users').insertOne({ email, password: sha1(password) });
-    const userId = insertInfo.insertedId.toString();
 
-    usersQueue.add({ userId });
-    res.status(201).json({ email, id: userId });
-  }
+    // Hash the password using SHA1
+    const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
 
-  static async getMe(req, res) {
-    const user = req;
+    // Create a new user object
+    const newUser = {
+      email,
+      password: hashedPassword,
+    };
 
-    res.status(200).json({
-      email: user.email,
-      id: user._id.toString(),
-    });
-  }
-}
+    try {
+      // Save the new user in the database
+      const result = await dbClient.getCollection('users').insertOne(newUser);
+      return res.status(201).json({
+        id: result.insertedId.toString(),
+        email: newUser.email,
+      });
+    } catch (error) {
+      console.error('Error creating user:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  // Endpoint to get current user information
+  async getMe(req, res) {
+    const token = req.headers['x-token'];
+
+    // Validate the token
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Retrieve the user ID associated with the token from Redis or your session store
+    const userId = await dbClient.getUserIdByToken(token);
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+      const user = await dbClient.getCollection('users').findOne({ _id: new ObjectId(userId) });
+
+      // If user is not found, return an error
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Respond with the user's email and ID
+      res.status(200).json({ email: user.email, id: user._id.toString() });
+    } catch (error) {
+      console.error('Error retrieving user:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+    return null;
+  },
+};
+
+export default UsersController;
